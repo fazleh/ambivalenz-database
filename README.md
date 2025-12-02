@@ -1,16 +1,18 @@
-﻿# How to run 
-cd database-ambivalenz
+﻿###  How to run 
 
-
-docker compose up --build
-http://localhost:5000
-
-
-Step 1: 
-cd /home/melahi/code/A-mediawiki-project/arch/ambivalenz-database
 cd /home/AD/elahi_l/PycharmProjects/ambivalenz-database
 
+
+###  build java project 
+
+cd marburg-project
+
+mvn clean package
+
+###  docker composer
+
 docker compose up --build
+
 http://localhost:5000
 http://localhost:7474/browser/
 
