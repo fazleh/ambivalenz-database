@@ -865,11 +865,30 @@ def add_attachment_upload():
     save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(save_path)
 
+    file_size = os.path.getsize(save_path)
+
     return jsonify({
         "success": True,
         "filename": filename,
-        "url": url_for("uploaded_file", filename=filename)
+        "url": url_for("uploaded_file", filename=filename),
+        "size": file_size
     })
+
+@app.route("/delete_attachment", methods=["POST"])
+def delete_attachment():
+    data = request.get_json()
+    filename = data.get("filename")
+
+    if not filename:
+        return jsonify({"success": False}), 400
+
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        return jsonify({"success": True})
+
+    return jsonify({"success": False, "error": "File not found"}), 404
 
 
 from flask import send_from_directory

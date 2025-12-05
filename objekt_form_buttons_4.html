@@ -139,15 +139,16 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
   }
 
   // -------------------------
-  // Fields by type (original arrays, unchanged)
+  // Fields by type (unchanged)
   // -------------------------
   const fieldsByType = {
-    "Painting": [ /* full list */ "Versionsgeschichte"],
-    "Portrait": [ /* full list */ "Versionsgeschichte"],
-    "Person": [ /* full list */ "Literatur"],
-    "LegalText": [ /* full list */ "Versionsgeschichte"],
-    "Literature": [ /* full list */ "Versionsgeschichte"]
+    "Painting": [ /* ... same list as before ... */ "Versionsgeschichte"],
+    "Portrait": [ /* ... */ "Versionsgeschichte"],
+    "Person": [ /* ... */ "Literatur"],
+    "LegalText": [ /* ... */ "Versionsgeschichte"],
+    "Literature": [ /* ... */ "Versionsgeschichte"]
   };
+  // Note: the large arrays above are unchanged — keep them or paste the original full arrays.
 
   // -------------------------
   // Form utilities and UI functions
@@ -177,6 +178,8 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
       tableBody.appendChild(row);
     });
   }
+
+  // Expose fillFields globally (used inline in HTML onchange)
   window.fillFields = fillFields;
 
   function cycleLight(f) {
@@ -189,7 +192,7 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
     l.classList.remove("red", "yellow", "green");
     l.classList.add(next);
   }
-  window.cycleLight = cycleLight;
+  window.cycleLight = cycleLight; // used by inline onclick
 
   function addRow() {
     customIndex++;
@@ -203,7 +206,7 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
       <td class="col4"><span style='color:#999;'>–</span></td>`;
     table.appendChild(r);
   }
-  window.addRow = addRow;
+  window.addRow = addRow; // called by button onclick
 
   async function saveData() {
     const form = document.getElementById('mainForm');
@@ -252,40 +255,35 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
     if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
       return `<img src="${url}" alt="" style="height:50px;border-radius:6px;">`;
     }
-    if (ext === "pdf") return `<span style="font-size:24px;">📄</span>`;
+    if (ext === "pdf") {
+      return `<span style="font-size:24px;">📄</span>`;
+    }
     return `<span style="font-size:24px;">📎</span>`;
   }
 
   function insertAttachmentRowAtTop(url, filename, size) {
     const tableBody = document.querySelector(".property-table tbody");
     if (!tableBody) return;
-
-    const readable = readableSize(size);
-    const id = "attachment_" + Date.now(); // unique ID for traffic light
     const icon = getFileIcon(url, filename);
-
+    const readable = readableSize(size);
     const row = document.createElement("tr");
     row.innerHTML = `
       <td class="col1">Anhang</td>
       <td class="col2">
         <a href="${url}" target="_blank">${filename}</a>
         ${readable ? `<br><small>${readable}</small>` : ''}
-        <br>${icon}
       </td>
-      <td class="col3">
-        <div class="traffic-light green" id="light_${id}" onclick="cycleLight('${id}')"></div>
-        <input type="hidden" name="traffic_${id}" value="green">
-      </td>
+      <td class="col3">${icon}</td>
       <td class="col4">
         <button type="button" class="delete-btn" onclick="deleteAttachment('${filename}', this)">🗑️ Löschen</button>
       </td>
     `;
+    // insert before the first existing row (or as first child)
     tableBody.insertBefore(row, tableBody.firstChild);
-}
-
-
+  }
   window.insertAttachmentRowAtTop = insertAttachmentRowAtTop;
 
+  // Delete attachment (calls backend)
   async function deleteAttachment(filename, buttonElement) {
     if (!confirm("Diesen Anhang wirklich löschen?")) return;
     try {
@@ -308,27 +306,52 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
   window.deleteAttachment = deleteAttachment;
 
   // -------------------------
-  // Single safe attachment upload binding
+  // Single, safe attachment upload handler
+  // - ensures only one binding
+  // - validates a file is selected
+  // - calls backend via fetch and uses backend returned size/url/filename
   // -------------------------
   function bindAttachmentUpload() {
     const form = document.getElementById("attachmentUploadForm");
-    if (!form || form.__bound) return;
-    form.__bound = true;
+    if (!form) {
+      // nothing to bind
+      return;
+    }
+
+    // avoid double-binding
+    if (form.__attachmentBound) return;
+    form.__attachmentBound = true;
 
     form.addEventListener("submit", async function (e) {
+      // prevent default so we control behavior (no page reload)
       e.preventDefault();
+
       const fileInput = form.querySelector("input[type='file'][name='attachment']");
-      if (!fileInput || !fileInput.files.length) {
+      if (!fileInput) {
+        alert("Kein Datei-Input gefunden.");
+        return;
+      }
+      if (!fileInput.files || !fileInput.files.length) {
         alert("❌ No file selected");
         return;
       }
+
       const fd = new FormData(form);
+
       try {
-        const res = await fetch(form.action, { method: "POST", body: fd });
+        const res = await fetch(form.action, {
+          method: "POST",
+          body: fd
+        });
+
+        // Expect backend to return JSON: { success: True, filename, url, size }
         const data = await res.json();
+
         if (data && data.success) {
+          // Insert row using backend-provided size/url
           insertAttachmentRowAtTop(data.url || ("/uploads/" + data.filename), data.filename, data.size || 0);
         } else {
+          console.error("Upload failed", data);
           alert("Fehler beim Hochladen des Anhangs.");
         }
       } catch (err) {
@@ -338,19 +361,30 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
     });
   }
 
+  // -------------------------
+  // Attach other global bindings (only once)
+  // -------------------------
   function init() {
     bindAttachmentUpload();
+    // other one-time bindings can be added here
   }
 
+  // initialize after DOM ready
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }
 
+  // expose some simple helpers for debugging (optional)
+  window.__appHelpers = {
+    insertAttachmentRowAtTop,
+    getFileIcon,
+    readableSize
+  };
+
 })();
 </script>
-
 
 </body>
 </html>
