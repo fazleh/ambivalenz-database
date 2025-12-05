@@ -36,7 +36,7 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
 }
 </style>
 
-
+    
 </head>
 <body>
 
@@ -272,22 +272,20 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
   }
 
   function insertImagePathRow(filePath) {
-  const tableBody = document.querySelector(".property-table tbody");
-  if (!tableBody) return;
-  const rowId = "image_path_" + Date.now();
-  const row = document.createElement("tr");
-  row.innerHTML = `
-    <td class="col1">image_path</td>
-    <td class="col2"><input type="text" value="${filePath}" readonly></td>
-    <td class="col3">
-      <div class="traffic-light green" id="light_${rowId}" onclick="cycleLight('${rowId}')"></div>
-      <input type="hidden" name="traffic_${rowId}" id="traffic_${rowId}" value="green">
-    </td>
-    <td class="col4">–</td>
-  `;
-  tableBody.insertBefore(row, tableBody.firstChild);
-}
-
+    const tableBody = document.querySelector(".property-table tbody");
+    if(!tableBody) return;
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td class="col1">image_path</td>
+      <td class="col2"><input type="text" value="${filePath}" readonly></td>
+      <td class="col3">
+        <div class="traffic-light green" style="cursor: default;"></div>
+        <input type="hidden" name="traffic_image_path" value="green">
+      </td>
+      <td class="col4">–</td>
+    `;
+    tableBody.insertBefore(row, tableBody.firstChild);
+  }
 
   function bindAttachmentUpload() {
     const form = document.getElementById("attachmentUploadForm");
