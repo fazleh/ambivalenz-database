@@ -846,44 +846,6 @@ def add_data_open_entity_form():
     fields = [special_field] + fields
     return render_template("objekt_form_buttons.html", fields=fields, data=data, colors=colors, name_entities=name_entities, source_node_id=source_node_id, relation_name=relation)
 
-
-# Path where files will be saved (you can adjust this to your needs)
-UPLOAD_FOLDER = 'static/private/'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt', 'zip', 'tar'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
-@app.route("/add_attachment_upload", methods=["POST"])
-def add_attachment_upload():
-    if "attachment" not in request.files:
-        return jsonify({"success": False}), 400
-
-    file = request.files["attachment"]
-    filename = secure_filename(file.filename)
-    save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(save_path)
-
-    return jsonify({
-        "success": True,
-        "filename": filename,
-        "url": url_for("uploaded_file", filename=filename)
-    })
-
-
-from flask import send_from_directory
-import os
-
-
-@app.route('/uploads/<path:filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-@app.route('/success')
-def success():
-    return 'File successfully uploaded!'
-
-
 # -----------------------
 # Optional: ensure default admin user
 # -----------------------

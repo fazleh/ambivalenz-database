@@ -855,21 +855,19 @@ app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt', '
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-@app.route("/add_attachment_upload", methods=["POST"])
+@app.route('/add_attachment_upload', methods=['POST'])
 def add_attachment_upload():
-    if "attachment" not in request.files:
-        return jsonify({"success": False}), 400
-
-    file = request.files["attachment"]
-    filename = secure_filename(file.filename)
-    save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(save_path)
-
-    return jsonify({
-        "success": True,
-        "filename": filename,
-        "url": url_for("uploaded_file", filename=filename)
-    })
+    if 'attachment' not in request.files:
+        return 'No file part', 400
+    file = request.files['attachment']
+    if file.filename == '':
+        return 'No selected file', 400
+    if file and allowed_file(file.filename):
+        filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(filename)
+        return redirect(url_for('success', filename=filename))  # You can redirect to a success page or process the file
+    else:
+        return 'File type not allowed', 400
 
 
 from flask import send_from_directory

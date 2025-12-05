@@ -35,13 +35,20 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
 <hr>
 
 <!-- Upload Attachment -->
-<form id="attachmentUploadForm" method="POST" enctype="multipart/form-data">
+<form method="POST" action="{{ url_for('add_attachment_upload') }}" enctype="multipart/form-data">
     <label for="attachment">Anhänge hochladen (z. B. Bilder, PDFs):</label>
     <input type="file" name="attachment" id="attachment" accept="*/*" required>
     <button type="submit" class="upload-btn">Anhang hochladen</button>
 </form>
-<hr>
 
+{% if uploaded_file %}
+    <p><strong>Hochgeladen:</strong>
+        <a href="{{ url_for('uploaded_file', filename=uploaded_file) }}" target="_blank">
+            {{ uploaded_file }}
+        </a>
+    </p>
+{% endif %}
+<hr>
 
 
 <label for="objectType">Objekt Typ auswählen:</label>
@@ -338,48 +345,6 @@ async function saveAndOpenEntity(field, sourceNodeId, entityName) {
         document.getElementById('saveMessage').textContent = "❌ Fehler beim Speichern!";
     }
 }
-
-
-function insertAttachmentRowAtTop(url, filename) {
-    const tableBody = document.querySelector(".property-table tbody");
-
-    const row = document.createElement("tr");
-    row.innerHTML = `
-        <td class="col1">Anhang</td>
-        <td class="col2"><a href="${url}" target="_blank">${filename}</a></td>
-        <td class="col3">
-            <div class="traffic-light green"></div>
-        </td>
-        <td class="col4">–</td>
-    `;
-
-    tableBody.insertBefore(row, tableBody.firstChild);
-}
-
-document.getElementById("attachmentUploadForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const fd = new FormData(this);
-
-    try {
-        const res = await fetch("{{ url_for('add_attachment_upload') }}", {
-            method: "POST",
-            body: fd
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-            insertAttachmentRowAtTop(data.url, data.filename);
-        } else {
-            alert("Fehler beim Hochladen des Anhangs.");
-        }
-    } catch (error) {
-        console.error(error);
-        alert("Fehler beim Hochladen.");
-    }
-});
-
 </script>
 
 </body>
