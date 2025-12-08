@@ -14,13 +14,19 @@ import re
 import random
 import subprocess
 import spacy
+import os
+
 
 # -----------------------
 # App configuration
 # -----------------------
 app = Flask(__name__, static_url_path="/static")
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "your-secret-key")
-app.config['UPLOAD_FOLDER'] = 'uploads'
+
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static/private')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # -----------------------
