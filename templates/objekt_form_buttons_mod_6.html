@@ -19,10 +19,25 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
 .upload-btn{background:#FF9800;color:white;margin-right:10px;}
 .entity-button{background:#e7f4ff;color:#005b8f;margin:2px 2px;border:1px solid #80cfff;border-radius:4px;}
 .traffic-light{width:20px;height:20px;border-radius:50%;display:inline-block;margin-left:5px;border:1px solid #999;cursor:pointer;}
-.red{background:red;} .yellow{background:yellow;} .green{background:green;} .gray{background:#ccc;}
-.delete-btn { background: #c62828; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
-.delete-btn:hover { background: #b71c1c; }
+.red{background:red;} .yellow{background:yellow;} .green{background:green;} .gray{background:gray;}
+
 </style>
+
+<style>
+.delete-btn {
+    background: #c62828;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.delete-btn:hover {
+    background: #b71c1c;
+}
+</style>
+
+
 </head>
 <body>
 
@@ -44,6 +59,8 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
 </form>
 
 <hr>
+
+
 
 <label for="objectType">Objekt Typ auswählen:</label>
 <select id="objectType" onchange="fillFields()">
@@ -73,14 +90,17 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
 <tr>
 <td class="col1">{{ field }}</td>
 <td class="col2">
-    {% set val = data.get(field, '') %}
+    {% set val = data.get(field,'') %}
     <textarea name="{{ field }}">{{ val }}</textarea>
 </td>
 <td class="col3">
-    {# Use user-chosen color if present; otherwise yellow if value present, else gray #}
-    {% if field in colors and colors[field] %}
+    {% set val = data.get(field, '') %}
+
+    {% if field in colors %}
+        {# User-chosen color exists → use it #}
         {% set color = colors[field] %}
     {% else %}
+        {# No user-selected color yet → use logic #}
         {% if val %}
             {% set color = 'yellow' %}
         {% else %}
@@ -97,6 +117,7 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
            name="traffic_{{ field }}"
            value="{{ color }}">
 </td>
+
 <td class="col4">
     {% for e in name_entities.get(field, []) %}
         <button type="button" class="entity-button"
@@ -119,6 +140,9 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
 <p id="saveMessage" style="margin-top:15px;color:green;font-weight:bold;"></p>
 </form>
 
+<!-- make sure your form tag is:
+<form id="attachmentUploadForm" method="POST" action="{{ url_for('add_attachment_upload') }}" enctype="multipart/form-data">
+-->
 <script>
 (function () {
   let customIndex = 0;
@@ -150,15 +174,14 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
     const fields = fieldsByType[selectedType] || [];
 
     fields.forEach(field => {
-      const fid = field.replace(/ /g,'_');
       const row = document.createElement('tr');
       row.innerHTML = `
         <td class="col1">${field}</td>
         <td class="col2"><textarea name="${field}"></textarea></td>
         <td class="col3">
-          <div class="traffic-light gray" id="light_${fid}"
-               onclick="cycleLight('${fid}')"></div>
-          <input type="hidden" id="traffic_${fid}" name="traffic_${field}" value="gray">
+          <div class="traffic-light gray" id="light_${field.replace(/ /g,'_')}"
+               onclick="cycleLight('${field.replace(/ /g,'_')}')"></div>
+          <input type="hidden" id="traffic_${field.replace(/ /g,'_')}" name="traffic_${field}" value="gray">
         </td>
         <td class="col4"><span style='color:#999;'>–</span></td>
       `;
@@ -171,18 +194,10 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
     const l = document.getElementById("light_" + f);
     const h = document.getElementById("traffic_" + f);
     if (!l || !h) return;
-
     const c = h.value;
-    let next;
-    // cycle: gray -> yellow -> green -> red -> gray
-    if (c === "gray") next = "yellow";
-    else if (c === "yellow") next = "green";
-    else if (c === "green") next = "red";
-    else next = "gray";
-
+    const next = c === "red" ? "yellow" : c === "yellow" ? "green" : "red";
     h.value = next;
-
-    l.classList.remove("red", "yellow", "green", "gray");
+    l.classList.remove("red", "yellow", "green");
     l.classList.add(next);
   }
   window.cycleLight = cycleLight;
@@ -191,18 +206,16 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
     customIndex++;
     const table = document.querySelector('.property-table tbody');
     if (!table) return;
-    const fid = "custom_" + customIndex;
     const r = document.createElement('tr');
     r.innerHTML = `<td class="col1"><input type="text" name="custom_property_${customIndex}" placeholder="Neues Property"></td>
       <td class="col2"><textarea name="custom_value_${customIndex}" rows="3"></textarea></td>
       <td class="col3">
-        <div class="traffic-light gray" id="light_${fid}" onclick="cycleLight('${fid}')"></div>
-        <input type="hidden" name="traffic_custom_${customIndex}" id="traffic_${fid}" value="gray">
+        <div class="traffic-light gray" id="light_custom_${customIndex}" onclick="cycleLight('custom_${customIndex}')"></div>
+        <input type="hidden" name="traffic_custom_${customIndex}" id="traffic_custom_${customIndex}" value="gray">
       </td>
       <td class="col4"><span style='color:#999;'>–</span></td>`;
     table.appendChild(r);
   }
-
   window.addRow = addRow;
 
   async function saveData() {
@@ -220,31 +233,40 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
   window.saveData = saveData;
 
   function clearForm() {
-    document.querySelectorAll("tbody tr").forEach(tr => {
-      // skip readonly image_path rows
-      if (tr.querySelector("td.col2 input[readonly]")) return;
+  // iterate rows
+  document.querySelectorAll("tbody tr").forEach(tr => {
+    // skip readonly image_path rows (those with an input[readonly] in col2)
+    if (tr.querySelector("td.col2 input[readonly]")) return;
 
-      // find editable element (textarea or non-readonly input) in col2
-      const input = tr.querySelector("td.col2 textarea, td.col2 input:not([readonly])");
-      if (input) {
-        if ('value' in input) input.value = "";
-        else input.textContent = "";
-      }
+    // find any editable input in col2 (textarea or non-readonly input)
+    const input = tr.querySelector("td.col2 textarea, td.col2 input:not([readonly])");
+    if (input) {
+      // clear the visible value
+      if ('value' in input) input.value = "";
+      else input.textContent = "";
+    }
 
-      // traffic light element and corresponding hidden input
-      const light = tr.querySelector(".traffic-light");
-      const hidden = tr.querySelector("input[type=hidden][id^='traffic_'], input[type=hidden][name^='traffic_']");
+    // find the traffic light element and its hidden field (traffic_*)
+    const light = tr.querySelector(".traffic-light");
+    const hidden = tr.querySelector("input[type=hidden][id^='traffic_'], input[type=hidden][name^='traffic_']");
 
-      if (light) {
-        light.classList.remove("red", "yellow", "green", "gray");
-        light.classList.add("gray");
-      }
-      if (hidden) hidden.value = "gray";
-    });
+    if (light) {
+      // remove any previous color classes and set gray
+      light.classList.remove("red", "yellow", "green", "gray");
+      light.classList.add("gray");
+    }
 
-    const msg = document.getElementById("saveMessage");
-    if (msg) msg.textContent = "";
-  }
+    if (hidden) {
+      hidden.value = "gray";
+    }
+  });
+
+  const msg = document.getElementById("saveMessage");
+  if (msg) msg.textContent = "";
+}
+
+
+
   window.clearForm = clearForm;
 
   async function saveAndOpenEntity(field, sourceNodeId, entityName) {
@@ -288,21 +310,22 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
   }
 
   function insertImagePathRow(filePath) {
-    const tableBody = document.querySelector(".property-table tbody");
-    if (!tableBody) return;
-    const rowId = "image_path_" + Date.now();
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td class="col1">image_path</td>
-      <td class="col2"><input type="text" value="${filePath}" readonly></td>
-      <td class="col3">
-        <div class="traffic-light green" id="light_${rowId}" onclick="cycleLight('${rowId}')"></div>
-        <input type="hidden" name="traffic_${rowId}" id="traffic_${rowId}" value="green">
-      </td>
-      <td class="col4">–</td>
-    `;
-    tableBody.insertBefore(row, tableBody.firstChild);
-  }
+  const tableBody = document.querySelector(".property-table tbody");
+  if (!tableBody) return;
+  const rowId = "image_path_" + Date.now();
+  const row = document.createElement("tr");
+  row.innerHTML = `
+    <td class="col1">image_path</td>
+    <td class="col2"><input type="text" value="${filePath}" readonly></td>
+    <td class="col3">
+      <div class="traffic-light green" id="light_${rowId}" onclick="cycleLight('${rowId}')"></div>
+      <input type="hidden" name="traffic_${rowId}" id="traffic_${rowId}" value="green">
+    </td>
+    <td class="col4">–</td>
+  `;
+  tableBody.insertBefore(row, tableBody.firstChild);
+}
+
 
   function bindAttachmentUpload() {
     const form = document.getElementById("attachmentUploadForm");
@@ -357,6 +380,9 @@ textarea{width:100%;min-height:50px;padding:6px;font-size:14px;border:1px solid 
   window.__appHelpers = { insertAttachmentRow, insertImagePathRow, readableSize };
 })();
 </script>
+
+
+
 
 </body>
 </html>
