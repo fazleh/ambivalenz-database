@@ -37,17 +37,40 @@ public class QueGG implements Constants {
     // RELATION
     public static void main(String[] args) {
         // Default Neo4j connection info#
-        String javaflag="True";
+        String javaflag = "True";
         Boolean neo4jFlag = true;
         String uri = "bolt://neo4j:7687";
         String user = "neo4j";
         String password = "password";
         String dir = "dataset/german/input/"; // default CSV path
-        String menu = DELETE; // default action
-        String nodeStr = "objectID=object1\n"
-                + "title=zypsy\n"
-                + "RELATION_authorOf=object2"; // default action
-
+        String menu = CREATE_FROM_STRING; // default action
+        String nodeStr = 
+                "Gattung / Genre=Bildende Kunst=yellow=\n"
+                + "Titel=Paar=yellow=\n"
+                + "Technik=Öl Gemälde=yellow=\n"
+                + "Dimensionen:=151,5x116 cm=yellow=\n"
+                + "Kurzbeschreibung=Paar in leichter Draufsicht und grellem Sonnenlicht mit Schattenpartien gezeigt. Beide tragen bunte Kleidung, die Frau in farbenfroher Tracht blickt aus dem Bild heraus, während der Mann mit Hut zu ihr schaut. Das Gemälde ist einem pointillistischen Stil, indem die Pinselschläge an Mosaik erinnern.=yellow=\n"
+                + "Motive / Topoi=Exotismus, Buntheit, Hautfarbe=yellow=\n"
+                + "Narrative / Diskurse=No data=red=\n"
+                + "Historischer Kontext=Ströher ist Meisterschüler in Berlin und macht Reisen nach Frankreich und Spanien=yellow=\n"
+                + "Antiziganistische / Stigmatisierende Elemente=No data=red=\n"
+                + "Agency=No data=red=\n"
+                + "Verknüpfung=No data=red=\n"
+                + "Narrativwandel bei Medienwechsel=No data=red=\n"
+                + "Rezeptionsweg=No data=red=\n"
+                + "Sammlung / Archiv=No data=red=\n"
+                + "Provenienz=Möglicherweise nach Skizzen aus Spanien oder dort entstanden.=yellow=\n"
+                + "Literatur=Lebenserinnerungen des Malers Friedrich Karl Ströher 1876 - 1925, hrsg. vom Freundeskreises des Werkes Karl Friedrich Ströher und dem Hunsrück-Museum Simmern, Simmern 2004, S. 52=yellow=\n"
+                + "Ausstellungen / Aufführungen / Veröffentlichungen=\"Ströher in Spanien\" Simmern, 2023-2024=yellow=\n"
+                + "Objekt- oder Werkteil=No data=red=\n"
+                + "Rechte / Lizenzen=No data=red=\n"
+                + "Digitalisat-Link/Pfad=No data=red=\n"
+                + "Metadaten-Status=No data=red=\n"
+                + "Erfasst von=No data=red=\n"
+                + "Erfassungsdatum=No data=red=\n"
+                + "Kommentar / Anmerkung=No data=red=\n"
+                + "Versionsgeschichte=No data=red=\n"
+                + "nodeType=Painting==";
 
         // Parse arguments
         // args[0] = menu, args[1] = CSV dir, args[2] = URI, args[3] = user, args[4] = password
@@ -72,18 +95,17 @@ public class QueGG implements Constants {
         if (args.length >= 7) {
             javaflag = args[6];
         }
-        
-        if(javaflag.contains("True"))
+
+        if (javaflag.contains("True")) {
             uri = "bolt://localhost:7687";
-        else
+        } else {
             uri = "bolt://neo4j:7687";
-        
-        
+        }
+
         System.out.println("successfully get inside the java code:");
         System.out.println(menu);
         System.out.println(nodeStr);
-        System.out.println(dir+" "+uri+" "+user+" "+password);
-
+        System.out.println(dir + " " + uri + " " + user + " " + password);
 
         Neo4j app = new Neo4j(uri, user, password);
 
@@ -118,7 +140,7 @@ public class QueGG implements Constants {
     }
 
     private static void addDataToNeo4j(Entity entity, Boolean neo4jFlag, Neo4j app) {
-        System.out.println("entity:"+entity);
+        System.out.println("entity:" + entity);
         if (neo4jFlag) {
             app.createNodeWithProperties(entity);
         }
@@ -128,7 +150,7 @@ public class QueGG implements Constants {
                 app.createRelationship(entity);
             }
         } else {
-            System.out.println(entity.getObjectID()+" No relation found!!");
+            System.out.println(entity.getObjectID() + " No relation found!!");
         }
     }
 
@@ -165,14 +187,23 @@ public class QueGG implements Constants {
         LinkedHashMap<String, String> properties = new LinkedHashMap<String, String>();
         String[] lines = nodeStr.split("\n");
         for (String line : lines) {
-            System.out.println(line);
             if (line.contains("=")) {
                 String[] info = line.split("\\=");
                 if (info.length < 2)
-                ; else {
+                ; else if (info.length < 4) {
+                    System.out.println(line);
                     String att = info[0];
+                    att=att.replace(" ", "_");
                     String value = info[1];
+                    System.out.println("property >> " + att + " value >> " + value);
                     properties.put(att, value);
+                    String att_status = "z_"+att  ;
+                    if (att.contains("nodeType"))
+                        ; else {
+                        String value_status = info[2];
+                        System.out.println("att_status >> " + att_status + " att_status >> " + value_status);
+                        properties.put(att_status, value_status);
+                    }
                 }
 
             }
