@@ -46,6 +46,7 @@ public class QueGG implements Constants {
         String menu = CREATE_FROM_STRING; // default action
         String nodeStr = 
                 "Gattung / Genre=Bildende Kunst=yellow=\n"
+                +"name=Paar=yellow=\n"
                 + "Titel=Paar=yellow=\n"
                 + "Technik=Öl Gemälde=yellow=\n"
                 + "Dimensionen:=151,5x116 cm=yellow=\n"
@@ -197,7 +198,7 @@ public class QueGG implements Constants {
                     String value = info[1];
                     System.out.println("property >> " + att + " value >> " + value);
                     properties.put(att, value);
-                    String att_status = "z_"+att  ;
+                    String att_status = "Z_"+att  ;
                     if (att.contains("nodeType"))
                         ; else {
                         String value_status = info[2];
