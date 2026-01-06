@@ -285,68 +285,21 @@ def painting_page(painting_name):
             MATCH (n:Painting {Name: $name})
             RETURN n
         """
-        record = session.run(query, name=painting_name).single()
+        result = session.run(query, name=painting_name)
+        record = result.single()
 
     if not record:
         return f"No data found for '{painting_name}'."
 
     node = dict(record["n"])
 
-    ordered_keys = [
-        "Objekt-ID",
-        "Titel",
-        "Künstler*in/Autor*in",
-        "Sichtbare_oder_genannte_Personen",
-        "Entstehungsjahr",
-        "Ort_der_Entstehung_/_Nutzung",
-        "Gattung_/_Genre",
-        "Technik",
-        "Dimensionen:",
-        "Kurzbeschreibung",
-        "Motive_/_Topoi",
-        "Narrative_/_Diskurse",
-        "Historischer_Kontext",
-        "Antiziganistische_/_Stigmatisierende_Elemente",
-        "Agency",
-        "Verknüpfung",
-        "Narrativwandel_bei_Medienwechsel",
-        "Rezeptionsweg",
-        "Sammlung_/_Archiv",
-        "Provenienz",
-        "Literatur",
-        "Ausstellungen_/_Aufführungen_/_Veröffentlichungen",
-        "Objekt-_oder_Werkteil",
-        "Rechte_/_Lizenzen",
-        "Digitalisat-Link/Pfad",
-        "Metadaten-Status",
-        "Erfasst_von",
-        "Erfassungsdatum",
-        "Kommentar_/_Anmerkung",
-        "Versionsgeschichte"
-    ]
-
-    table_rows = []
-
-    for key in ordered_keys:
-        value = node.get(key, "No data")
-        status = node.get(f"Z_{key}", "")
-        comment = node.get("Kommentar_/_Anmerkung", "")
-
-        table_rows.append({
-            "property": key.replace("_", " "),
-            "value": value,
-            "status": status,
-            "comment": comment
-        })
-
     return render_template(
         "Individual_page_var.html",
         title=node.get("Titel", painting_name),
         artist_info=node.get("Kurzbeschreibung", ""),
-        image_path=node.get("Digitalisat-Link/Pfad", ""),
-        table_rows=table_rows
+        image_path=node.get("Digitalisat-Link/Pfad", ""),  # correct field
+        content=node
     )
-
 
 @app.route("/book/<painting_name>")
 def book_item(painting_name):
