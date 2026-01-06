@@ -1,6 +1,4 @@
-﻿version: "3.9"
-
-services:
+﻿services:
   neo4j:
     image: neo4j:5.19
     ports:

@@ -1,4 +1,4 @@
-﻿###  How to run 
+###  How to run 
 
 cd /home/AD/elahi_l/PycharmProjects/ambivalenz-database
 
@@ -15,6 +15,11 @@ docker compose up --build
 
 http://localhost:5000
 http://localhost:7474/browser/
+
+
+MATCH (p:Painting)
+DETACH DELETE p;
+
 
 
 
